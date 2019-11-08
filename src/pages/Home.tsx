@@ -1,26 +1,163 @@
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/react';
-import React from 'react';
+import {
+  IonContent,
+  IonHeader,
+  IonPage,
+  IonTitle,
+  IonToolbar,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonFab,
+  IonFabButton,
+  IonIcon,
+  IonModal,
+  IonTextarea,
+  IonButtons,
+  IonButton,
+  IonCheckbox
+} from "@ionic/react";
+import { add, close, checkmark, trash } from "ionicons/icons";
+import React, { Component } from "react";
 
-const Home: React.FC = () => {
-  return (
-    <IonPage>
-      <IonHeader>
-        <IonToolbar>
-          <IonTitle>Ionic Blank</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-      <IonContent className="ion-padding">
-        The world is your oyster.
-        <p>
-          If you get lost, the{' '}
-          <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/">
-            docs
-          </a>{' '}
-          will be your guide.
-        </p>
-      </IonContent>
-    </IonPage>
-  );
-};
+class Home extends Component {
+  state = {
+    todoList: [
+      {
+        content: "Meet with Brad",
+        finished: false
+      },
+      {
+        content: "Go to Costco",
+        finished: true
+      },
+      {
+        content: "Hit the gym",
+        finished: true
+      },
+      {
+        content: "Remember to buy milk",
+        finished: false
+      },
+      {
+        content: "Finish Homework 6",
+        finished: false
+      }
+    ],
+    modalOpen: false,
+    newTodoContent: ""
+  };
+
+  todoContentInputHandler = (event: any) => {
+    this.setState({
+      newTodoContent: event.target.value
+    });
+  };
+
+  clearNewTodoContent = () => {
+    this.setState({ newTodoContent: "" });
+  };
+
+  addItemToList = () => {
+    if (this.state.newTodoContent === "") {
+      return;
+    }
+    let newTodoList = [...this.state.todoList];
+    newTodoList.push({
+      content: this.state.newTodoContent,
+      finished: false
+    });
+
+    this.setState({
+      todoList: newTodoList,
+      newTodoContent: ""
+    });
+  };
+
+  switchItemCheckedStatus = (idx: number) => {
+    let newTodoList = [...this.state.todoList];
+    newTodoList[idx].finished = !newTodoList[idx].finished;
+    this.setState({
+      todoList: newTodoList
+    });
+  };
+
+  toggleModalOpenStatus = () => {
+    const isModalOpen = this.state.modalOpen;
+    this.setState({ modalOpen: !isModalOpen });
+  };
+
+  render() {
+    return (
+      <IonPage>
+        <IonHeader>
+          <IonToolbar>
+            <IonTitle>To do</IonTitle>
+          </IonToolbar>
+        </IonHeader>
+        <IonContent className="ion-padding">
+          <IonList>
+            {this.state.todoList.map((todoItem, idx) => {
+              return (
+                <IonItem key={idx}>
+                  <IonCheckbox
+                    onClick={() => this.switchItemCheckedStatus(idx)}
+                    slot="start"
+                    value={todoItem.content}
+                    checked={todoItem.finished}
+                  />
+                  <IonLabel>{todoItem.content}</IonLabel>
+                </IonItem>
+              );
+            })}
+          </IonList>
+
+          <IonFab vertical="bottom" horizontal="end" slot="fixed">
+            <IonFabButton onClick={() => this.toggleModalOpenStatus()}>
+              <IonIcon icon={add} />
+            </IonFabButton>
+          </IonFab>
+
+          <IonModal isOpen={this.state.modalOpen}>
+            <IonHeader>
+              <IonToolbar>
+                <IonButtons>
+                  <IonTitle>New Todo</IonTitle>
+                  <IonButton onClick={() => this.toggleModalOpenStatus()}>
+                    <IonIcon icon={close} />
+                  </IonButton>
+                </IonButtons>
+              </IonToolbar>
+            </IonHeader>
+            <IonContent className="ion-padding">
+              <IonButton
+                onClick={() => {
+                  this.addItemToList();
+                  this.toggleModalOpenStatus();
+                }}
+              >
+                <IonIcon icon={checkmark} slot="start" />
+                Done
+              </IonButton>
+              <IonButton
+                color="danger"
+                onClick={() => this.clearNewTodoContent()}
+              >
+                <IonIcon icon={trash} slot="start" />
+                Clear
+              </IonButton>
+              <IonTextarea
+                placeholder="new todo..."
+                value={this.state.newTodoContent}
+                onIonChange={e => this.todoContentInputHandler(e)}
+                autofocus
+                autoGrow
+              />
+            </IonContent>
+          </IonModal>
+        </IonContent>
+      </IonPage>
+    );
+  }
+}
 
 export default Home;
