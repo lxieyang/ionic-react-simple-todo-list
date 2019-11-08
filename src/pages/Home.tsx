@@ -14,7 +14,10 @@ import {
   IonTextarea,
   IonButtons,
   IonButton,
-  IonCheckbox
+  IonCheckbox,
+  IonItemSliding,
+  IonItemOptions,
+  IonItemOption
 } from "@ionic/react";
 import { add, close, checkmark, trash } from "ionicons/icons";
 import React, { Component } from "react";
@@ -81,6 +84,16 @@ class Home extends Component {
     });
   };
 
+  listRef: any;
+
+  removeItemFromList = (idx: number) => {
+    let newTodoList = [...this.state.todoList];
+    newTodoList.splice(idx, 1);
+    this.setState({
+      todoList: newTodoList
+    });
+  };
+
   toggleModalOpenStatus = () => {
     const isModalOpen = this.state.modalOpen;
     this.setState({ modalOpen: !isModalOpen });
@@ -95,18 +108,31 @@ class Home extends Component {
           </IonToolbar>
         </IonHeader>
         <IonContent className="ion-padding">
-          <IonList>
+          <IonList ref={me => (this.listRef = me)}>
             {this.state.todoList.map((todoItem, idx) => {
               return (
-                <IonItem key={idx}>
-                  <IonCheckbox
-                    onClick={() => this.switchItemCheckedStatus(idx)}
-                    slot="start"
-                    value={todoItem.content}
-                    checked={todoItem.finished}
-                  />
-                  <IonLabel>{todoItem.content}</IonLabel>
-                </IonItem>
+                <IonItemSliding key={idx}>
+                  <IonItem>
+                    <IonCheckbox
+                      onClick={() => this.switchItemCheckedStatus(idx)}
+                      slot="start"
+                      value={todoItem.content}
+                      checked={todoItem.finished}
+                    />
+                    <IonLabel>{todoItem.content}</IonLabel>
+                  </IonItem>
+                  <IonItemOptions side="end">
+                    <IonItemOption
+                      onClick={() => {
+                        this.removeItemFromList(idx);
+                        this.listRef.closeSlidingItems(); // close sliding
+                      }}
+                      color="danger"
+                    >
+                      <IonIcon icon={trash} slot="start" /> Delete
+                    </IonItemOption>
+                  </IonItemOptions>
+                </IonItemSliding>
               );
             })}
           </IonList>
