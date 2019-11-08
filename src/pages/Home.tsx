@@ -60,10 +60,9 @@ class Home extends Component {
     }
   }
 
-  persistTodosToStorage = () => {
+  persistTodosToStorage = (newTodos: any) => {
     // persist todos to local storage
-    const todos = [...this.state.todoList];
-    localStorage.setItem("todoList", JSON.stringify(todos));
+    localStorage.setItem("todoList", JSON.stringify(newTodos));
   };
 
   todoContentInputHandler = (event: any) => {
@@ -91,7 +90,7 @@ class Home extends Component {
       newTodoContent: ""
     });
 
-    this.persistTodosToStorage();
+    this.persistTodosToStorage(newTodoList);
   };
 
   switchItemCheckedStatus = (idx: number) => {
@@ -101,7 +100,7 @@ class Home extends Component {
       todoList: newTodoList
     });
 
-    this.persistTodosToStorage();
+    this.persistTodosToStorage(newTodoList);
   };
 
   listRef: any;
@@ -113,7 +112,7 @@ class Home extends Component {
       todoList: newTodoList
     });
 
-    this.persistTodosToStorage();
+    this.persistTodosToStorage(newTodoList);
   };
 
   toggleModalOpenStatus = () => {
