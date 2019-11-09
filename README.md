@@ -10,4 +10,5 @@
 
 ## Preview
 
-![demo-gif](preview/ionic-react-todo-demo.gif)
+<img alt="demo" src="preview/ionic-react-todo-demo.gif" width="250"/>
+
