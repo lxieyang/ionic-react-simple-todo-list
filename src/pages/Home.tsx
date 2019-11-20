@@ -22,48 +22,60 @@ import {
 import { add, close, checkmark, trash } from "ionicons/icons";
 import React, { Component } from "react";
 
+import firebase from "firebase/app";
+import { firebaseConfig } from "../secret.firebase";
+import { any } from "prop-types";
+require("firebase/firestore");
+
+// Initialize Firebase
+firebase.initializeApp(firebaseConfig);
+
+const db = firebase.firestore();
+
+interface TodoItem {
+  content: string;
+  finished: boolean;
+  id: string;
+}
+
 class Home extends Component {
   state = {
-    todoList: [
-      {
-        content: "Meet with Brad",
-        finished: false
-      },
-      {
-        content: "Go to Costco",
-        finished: true
-      },
-      {
-        content: "Hit the gym",
-        finished: true
-      },
-      {
-        content: "Remember to buy milk",
-        finished: false
-      },
-      {
-        content: "Finish Homework 6",
-        finished: false
-      }
-    ],
+    todoList: [],
     modalOpen: false,
     newTodoContent: ""
   };
 
+  unsubscribeTodos: any;
+
   componentDidMount() {
-    // load todos from local storage
-    let todos = localStorage.getItem("todoList");
-    if (todos !== null) {
-      this.setState({
-        todoList: JSON.parse(todos)
+    // set up a listener for the 'todos' collection in Firestore
+    // once there's any changes made to this collection, the listener function will run
+    this.unsubscribeTodos = db.collection("todos").onSnapshot(querySnapshot => {
+      // the listener function will
+      // 1. receive the latest version of the 'todo' collection
+      // 2. loop through all the todo items in the collection
+      // 3. push them in a temporary list stored in memory
+      // 4. update the state with the new todo list
+      let todos: TodoItem[] = [];
+      querySnapshot.forEach(snapshot => {
+        // each todo item looks like: {content: 'xxxxx', finished: true, id: 3unuq9yt4ndas}
+        const todoItemData = snapshot.data();
+        todos.push({
+          content: todoItemData.content,
+          finished: todoItemData.finished,
+          id: snapshot.id
+        });
       });
-    }
+      this.setState({ todoList: todos });
+    });
   }
 
-  persistTodosToStorage = (newTodos: any) => {
-    // persist todos to local storage
-    localStorage.setItem("todoList", JSON.stringify(newTodos));
-  };
+  componentWillUnmount() {
+    if (this.unsubscribeTodos) {
+      // it's a good practice to unsubscribe the listeners to prevent memory leaks
+      this.unsubscribeTodos();
+    }
+  }
 
   todoContentInputHandler = (event: any) => {
     this.setState({
@@ -79,40 +91,35 @@ class Home extends Component {
     if (this.state.newTodoContent === "") {
       return;
     }
-    let newTodoList = [...this.state.todoList];
-    newTodoList.push({
+    // add the new todo item to the 'todos' collection in Firestore as a new document.
+    // the add() method will automatically take care of IDing the new document to make
+    // sure it's unqiue within the 'todos' collection
+    db.collection("todos").add({
       content: this.state.newTodoContent,
       finished: false
     });
 
     this.setState({
-      todoList: newTodoList,
       newTodoContent: ""
     });
-
-    this.persistTodosToStorage(newTodoList);
   };
 
   switchItemCheckedStatus = (idx: number) => {
-    let newTodoList = [...this.state.todoList];
-    newTodoList[idx].finished = !newTodoList[idx].finished;
-    this.setState({
-      todoList: newTodoList
-    });
-
-    this.persistTodosToStorage(newTodoList);
+    db.collection("todos")
+      .doc(this.state.todoList[idx]["id"])
+      .update({
+        finished: !this.state.todoList[idx]["finished"]
+      });
   };
 
   listRef: any;
 
   removeItemFromList = (idx: number) => {
-    let newTodoList = [...this.state.todoList];
-    newTodoList.splice(idx, 1);
-    this.setState({
-      todoList: newTodoList
-    });
-
-    this.persistTodosToStorage(newTodoList);
+    // remove the todo with id equals {this.state.todoList[idx].id} from
+    // the 'todos' collection in firestore
+    db.collection("todos")
+      .doc(this.state.todoList[idx]["id"])
+      .delete();
   };
 
   toggleModalOpenStatus = () => {
@@ -130,7 +137,7 @@ class Home extends Component {
         </IonHeader>
         <IonContent className="ion-padding">
           <IonList ref={me => (this.listRef = me)}>
-            {this.state.todoList.map((todoItem, idx) => {
+            {this.state.todoList.map((todoItem: TodoItem, idx) => {
               return (
                 <IonItemSliding key={idx}>
                   <IonItem>
